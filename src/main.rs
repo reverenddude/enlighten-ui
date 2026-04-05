@@ -1,3 +1,4 @@
+use enlighten::Case;
 use iced::Element;
 use iced::widget::center;
 
@@ -5,8 +6,8 @@ mod case;
 mod home;
 mod processing;
 
-use case::Case;
-use home::Home;
+use case::CasePage;
+use home::HomePage;
 
 fn main() -> iced::Result {
     iced::application(App::default, App::update, App::view).run()
@@ -15,7 +16,7 @@ fn main() -> iced::Result {
 #[derive(Default)]
 struct App {
     current_page: Page,
-    home: Home,
+    home: HomePage,
 }
 
 impl App {
@@ -28,24 +29,30 @@ impl App {
                         new_case_settings.case_path,
                     )
                     .unwrap();
-                    self.current_page = Page::Case(case)
+                    self.current_page = Page::Case(CasePage::new(case))
                 }
                 home::Message::OpenCase(case_path) => {
                     println!("Opening case: {}", case_path);
                     let case = enlighten::Case::open(case_path).unwrap();
-                    self.current_page = Page::Case(case);
+                    self.current_page = Page::Case(CasePage::new(case));
                 }
             },
-            Message::Case(case_msg) => match case_msg {
-                case::Message::CloseCase => self.current_page = Page::Home,
-            },
+            Message::Case(case_msg) => {
+                if let Page::Case(case_page) = &mut self.current_page {
+                    if let Some(nav) = case_page.update(case_msg) {
+                        match nav {
+                            case::NavigationMessage::CloseCase => self.current_page = Page::Home,
+                        }
+                    }
+                }
+            }
         }
     }
 
     fn view(&self) -> Element<'_, Message> {
         let content: Element<Message> = match self.current_page {
             Page::Home => self.home.view().map(Message::Home),
-            Page::Case(ref enlighten_case) => Case.view(enlighten_case).map(Message::Case),
+            Page::Case(ref case_page) => case_page.view().map(Message::Case),
         };
 
         center(content).into()
@@ -56,7 +63,7 @@ impl App {
 enum Page {
     #[default]
     Home,
-    Case(enlighten::Case),
+    Case(CasePage),
 }
 
 #[derive(Debug, Clone)]

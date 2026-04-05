@@ -2,7 +2,7 @@ use iced::widget::{button, column, row, text};
 use iced::{Alignment, Center, Element};
 
 #[derive(Default, Debug, Clone, Copy)]
-pub struct Home {
+pub struct HomePage {
     show_new_case_modal: bool,
 }
 
@@ -18,7 +18,7 @@ pub enum Message {
     OpenCase(String),
 }
 
-impl Home {
+impl HomePage {
     pub fn view(&self) -> Element<'_, Message> {
         row![
             column![

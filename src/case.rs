@@ -3,19 +3,42 @@ use iced::Element;
 use iced::widget::{button, center, column, row, text};
 
 #[derive(Debug)]
-pub struct Case;
+pub struct CasePage {
+    case: enlighten::Case,
+}
 
 #[derive(Debug, Copy, Clone)]
 pub enum Message {
     CloseCase,
+    AddEvidenceStore,
+    Process,
 }
 
-impl Case {
-    pub fn view(&self, case: &enlighten::Case) -> Element<'_, Message> {
-        let title = text(format!("Hello from: {}", case.case_name.clone()));
+pub enum NavigationMessage {
+    CloseCase,
+}
+
+impl CasePage {
+    pub fn new(case: enlighten::Case) -> Self {
+        Self { case }
+    }
+    pub fn view(&self) -> Element<'_, Message> {
+        let title = text(format!("Hello from: {}", &self.case.case_name));
 
         row![title, button("Close Case").on_press(Message::CloseCase)]
             .align_y(Center)
             .into()
+    }
+
+    pub fn update(&mut self, message: Message) -> Option<NavigationMessage> {
+        match message {
+            Message::AddEvidenceStore => {
+                todo!()
+            }
+            Message::Process => {
+                todo!()
+            }
+            Message::CloseCase => return Some(NavigationMessage::CloseCase),
+        };
     }
 }
