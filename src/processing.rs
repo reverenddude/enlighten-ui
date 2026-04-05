@@ -2,7 +2,7 @@ use iced::Alignment::Center;
 use iced::Element;
 use iced::widget::{button, center, column, row, text};
 
-pub(crate) struct Processing;
+pub struct Processing;
 
 struct ProcessingState;
 
