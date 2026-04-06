@@ -1,9 +1,7 @@
 use iced::Element;
-use iced::widget::center;
 
 mod case;
 mod home;
-mod processing;
 
 use case::CasePage;
 use home::HomePage;

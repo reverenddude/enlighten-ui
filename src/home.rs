@@ -1,4 +1,5 @@
 use iced::alignment::Horizontal::Right;
+use iced::alignment::Vertical::Bottom;
 use iced::widget::{button, column, container, row, text, text_input};
 use iced::{Center, Element, Length};
 
@@ -105,18 +106,25 @@ impl HomePage {
             // Case Actions
             column![
                 container(text("Enlighten Processing").height(Length::FillPortion(3))),
-                container(self.case_btns()).height(Length::FillPortion(1))
+                container(self.case_btns())
+                    .align_y(Bottom)
+                    .align_x(Center)
+                    .height(Length::FillPortion(1))
             ]
             .height(Length::FillPortion(1))
-            .max_width(500)
             .align_x(Center),
             // Recent Case List
-            column![text("Recent Cases")]
+            container(self.recent_case_list())
+                .style(container::rounded_box)
                 .align_x(Right)
-                .height(Length::FillPortion(3))
+                .height(Length::Fill)
+                .width(Length::Fill)
         ]
-        .align_y(Center)
         .into()
+    }
+
+    fn recent_case_list(&self) -> Element<'_, Message> {
+        column![text("Recent Cases")].spacing(10).into()
     }
 
     fn case_btns(&self) -> Element<'_, Message> {

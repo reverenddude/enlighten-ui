@@ -1,6 +1,6 @@
 use iced::Alignment::Center;
 use iced::Element;
-use iced::widget::{button, center, column, row, text};
+use iced::widget::{button, column, row, text};
 
 #[derive(Debug)]
 pub struct CasePage {
