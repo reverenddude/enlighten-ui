@@ -1,5 +1,6 @@
-use iced::widget::{button, column, row, text};
-use iced::{Alignment, Center, Element};
+use iced::alignment::Horizontal::Right;
+use iced::widget::{button, column, container, row, text, text_input};
+use iced::{Center, Element, Length};
 
 #[derive(Default, Debug, Clone)]
 pub struct HomePage {
@@ -101,28 +102,74 @@ impl HomePage {
 
     fn home_widget(&self) -> Element<'_, Message> {
         row![
+            // Case Actions
             column![
-                text("Hello from Home"),
-                button("Create New Case").on_press(Message::NewCase(NewCaseSettings {
-                    case_name: "NewCase".to_string(),
-                    case_path: "/tmp/enlighten/cases".to_string()
-                })),
-                button("Open Existing Case").on_press(Message::OpenCase(
-                    "/tmp/enlighten/cases/NewCase".to_string()
-                ))
+                container(text("Enlighten Processing").height(Length::FillPortion(3))),
+                container(self.case_btns()).height(Length::FillPortion(1))
             ]
+            .height(Length::FillPortion(1))
             .max_width(500)
-            .align_x(Center)
+            .align_x(Center),
+            // Recent Case List
+            column![text("Recent Cases")]
+                .align_x(Right)
+                .height(Length::FillPortion(3))
         ]
         .align_y(Center)
         .into()
     }
 
+    fn case_btns(&self) -> Element<'_, Message> {
+        row![
+            button("Create New Case")
+                .height(80)
+                .on_press(Message::CreateNewCase),
+            button("Open Existing Case")
+                .height(80)
+                .on_press(Message::OpenCase)
+        ]
+        .spacing(10)
+        .into()
+    }
+
     fn new_case_widget(&self) -> Element<'_, Message> {
-        
+        row![
+            text("Create New Case"),
+            column![
+                row![
+                    text("Case Name"),
+                    text_input("", &self.new_case_settings.case_name)
+                        .on_input(Message::NewCaseNameChanged)
+                ],
+                row![
+                    text("Case Path"),
+                    text_input("", &self.new_case_settings.case_path)
+                        .on_input(Message::NewCasePathChanged)
+                ],
+                button("Create Case").on_press(Message::Submit),
+                self.cancel_btn()
+            ]
+        ]
+        .into()
     }
 
     fn open_case_widget(&self) -> Element<'_, Message> {
-        todo!()
+        row![
+            text("Open Case"),
+            column![
+                row![
+                    text("Case Path"),
+                    text_input("", &self.open_case_settings.case_path)
+                        .on_input(Message::OpenCasePathChanged)
+                ],
+                button("Open Case").on_press(Message::Submit),
+                self.cancel_btn()
+            ]
+        ]
+        .into()
+    }
+
+    fn cancel_btn(&self) -> Element<'_, Message> {
+        button("Cancel").on_press(Message::Cancel).into()
     }
 }
