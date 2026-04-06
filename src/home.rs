@@ -37,4 +37,12 @@ impl HomePage {
         .align_y(Center)
         .into()
     }
+
+    fn new_case_widget(&self) -> Element<'_, Message> {
+        
+    }
+
+    fn open_case_widget(&self) -> Element<'_, Message> {
+        todo!()
+    }
 }
