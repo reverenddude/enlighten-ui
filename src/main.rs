@@ -20,13 +20,12 @@ fn main() -> iced::Result {
 #[derive(Default)]
 struct App {
     current_page: Page,
-    home: HomePage,
 }
 
 impl App {
     fn title(&self) -> String {
         match self.current_page {
-            Page::Home => "Enlighten".to_string(),
+            Page::Home(..) => "Enlighten".to_string(),
             Page::Case(ref case_page) => case_page.case_name(),
         }
     }
@@ -34,21 +33,28 @@ impl App {
     // Messages are just commands the user initiates via interactions
     fn update(&mut self, message: Message) {
         match message {
-            Message::Home(home_msg) => match home_msg {
-                home::Message::NewCase(new_case_settings) => {
-                    let case = enlighten::Case::new(
-                        new_case_settings.case_name,
-                        new_case_settings.case_path,
-                    )
-                    .unwrap();
-                    self.current_page = Page::Case(CasePage::new(case))
+            Message::Home(home_msg) => {
+                if let Page::Home(home_page) = &mut self.current_page {
+                    if let Some(case) = home_page.update(home_msg) {
+                        match case {
+                            home::CaseSettings::NewCase(new_case_settings) => {
+                                let case = enlighten::Case::new(
+                                    new_case_settings.case_name,
+                                    new_case_settings.case_path,
+                                )
+                                .unwrap();
+                                self.current_page = Page::Case(CasePage::new(case))
+                            }
+                            home::CaseSettings::OpenCase(case_path) => {
+                                println!("Opening case: {}", case_path);
+                                let case = enlighten::Case::open(case_path).unwrap();
+                                self.current_page = Page::Case(CasePage::new(case));
+                            }
+                        }
+                    }
                 }
-                home::Message::OpenCase(case_path) => {
-                    println!("Opening case: {}", case_path);
-                    let case = enlighten::Case::open(case_path).unwrap();
-                    self.current_page = Page::Case(CasePage::new(case));
-                }
-            },
+            }
+
             // The case sub page generates numerous internal messages and a singular navigation message.
             // The application only needs to care about the navigation message as it relates to the applciation
             // rendering pages.
@@ -56,7 +62,9 @@ impl App {
                 if let Page::Case(case_page) = &mut self.current_page {
                     if let Some(nav) = case_page.update(case_msg) {
                         match nav {
-                            case::NavigationMessage::CloseCase => self.current_page = Page::Home,
+                            case::NavigationMessage::CloseCase => {
+                                self.current_page = Page::Home(HomePage::new())
+                            }
                         }
                     }
                 }
@@ -68,19 +76,25 @@ impl App {
     // So the Application view is really just a widget that displays other widgets.
     fn view(&self) -> Element<'_, Message> {
         let content: Element<Message> = match self.current_page {
-            Page::Home => self.home.view().map(Message::Home),
+            Page::Home(ref home_page) => home_page.view().map(Message::Home),
             Page::Case(ref case_page) => case_page.view().map(Message::Case),
         };
 
-        center(content).into()
+        //center(content).into()
+        content.into()
     }
 }
 
-#[derive(Default)]
+#[derive(Debug)]
 enum Page {
-    #[default]
-    Home,
+    Home(HomePage),
     Case(CasePage),
+}
+
+impl Default for Page {
+    fn default() -> Self {
+        Self::Home(HomePage::new())
+    }
 }
 
 #[derive(Debug, Clone)]
