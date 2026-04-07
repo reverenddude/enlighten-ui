@@ -153,9 +153,9 @@ impl HomePage {
         .align_x(Center);
 
         let right_panel = match self.page_state {
-            HomePageState::Home => container(self.recent_case_list())
+            HomePageState::Home => container(column![text("Recent Cases")].spacing(10))
                 .style(container::rounded_box)
-                .align_x(Right)
+                .align_x(Center)
                 .height(Length::Fill)
                 .width(Length::Fill)
                 .into(),
@@ -166,10 +166,6 @@ impl HomePage {
         let content = row![left_panel, right_panel];
 
         center(content).into()
-    }
-
-    fn recent_case_list(&self) -> Element<'_, Message> {
-        column![text("Recent Cases")].spacing(10).into()
     }
 
     fn case_btns(&self) -> Element<'_, Message> {
