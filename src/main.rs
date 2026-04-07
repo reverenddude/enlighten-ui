@@ -1,5 +1,5 @@
 use iced::widget::{column, container, pick_list, row, text};
-use iced::{Element, Length, Task};
+use iced::{Element, Length, Task, window};
 
 mod case;
 mod home;
@@ -9,6 +9,10 @@ use home::HomePage;
 
 fn main() -> iced::Result {
     iced::application(App::default, App::update, App::view)
+        .window(window::Settings {
+            position: window::Position::Centered,
+            ..Default::default()
+        })
         .theme(|app: &App| app.theme.clone())
         .title(App::title)
         .run()

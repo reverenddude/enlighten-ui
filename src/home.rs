@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use iced::alignment::Horizontal::Right;
 use iced::alignment::Vertical::Bottom;
-use iced::widget::{button, column, container, row, space, text, text_input};
+use iced::widget::{button, center, column, container, row, space, text, text_input};
 use iced::{Center, Element, Length, Task};
 
 #[derive(Default, Debug, Clone)]
@@ -140,35 +140,43 @@ impl HomePage {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
+        self.home_widget()
+        /*
         match self.page_state {
             HomePageState::Home => self.home_widget(),
             HomePageState::CreateCase => self.new_case_widget(),
             HomePageState::OpenCase => self.open_case_widget(),
         }
+        */
     }
 
     fn home_widget(&self) -> Element<'_, Message> {
-        row![
-            // Case Actions
-            column![
-                container(text("Enlighten Processing").height(Length::FillPortion(5))),
-                container(self.case_btns())
-                    .padding([0, 20])
-                    .align_y(Bottom)
-                    .align_x(Center)
-                    .height(Length::FillPortion(2)),
-                space().height(Length::FillPortion(1))
-            ]
-            .height(Length::FillPortion(1))
-            .align_x(Center),
-            // Recent Case Lis
-            container(self.recent_case_list())
+        let left_panel = column![
+            container(text("Enlighten Processing").height(Length::FillPortion(5))),
+            container(self.case_btns())
+                .padding([0, 20])
+                .align_y(Bottom)
+                .align_x(Center)
+                .height(Length::FillPortion(2)),
+            space().height(Length::FillPortion(1))
+        ]
+        .height(Length::FillPortion(1))
+        .align_x(Center);
+
+        let right_panel = match self.page_state {
+            HomePageState::Home => container(self.recent_case_list())
                 .style(container::rounded_box)
                 .align_x(Right)
                 .height(Length::Fill)
                 .width(Length::Fill)
-        ]
-        .into()
+                .into(),
+            HomePageState::CreateCase => self.new_case_widget(),
+            HomePageState::OpenCase => self.open_case_widget(),
+        };
+
+        let content = row![left_panel, right_panel];
+
+        center(content).into()
     }
 
     fn recent_case_list(&self) -> Element<'_, Message> {
@@ -189,50 +197,73 @@ impl HomePage {
     }
 
     fn new_case_widget(&self) -> Element<'_, Message> {
-        row![
+        let content = column![
             text("Create New Case"),
-            column![
+            // Case Name Entry
+            container(
                 row![
-                    text("Case Name"),
+                    container(text("Case Name")).padding([0, 10]),
                     text_input("", &self.new_case_settings.case_name)
+                        .width(300)
                         .on_input(Message::NewCaseNameChanged)
-                ],
-                row![
-                    text("Case Path"),
-                    text_input("", &self.new_case_settings.case_path)
-                        .on_input(Message::NewCasePathChanged)
-                ],
-                row![
-                    button("Browse").on_press(Message::BrowseClicked),
-                    button("Create Case").on_press(Message::Submit),
-                    self.cancel_btn()
                 ]
+                .align_y(Center)
+            )
+            .style(container::rounded_box),
+            // Case Path Entry
+            container(
+                row![
+                    container(text("Case Path")).padding([0, 10]),
+                    text_input("", &self.new_case_settings.case_path)
+                        .width(300)
+                        .on_input(Message::NewCasePathChanged)
+                ]
+                .align_y(Center)
+            )
+            .style(container::rounded_box),
+            // Action Buttons
+            row![
+                button("Browse").on_press(Message::BrowseClicked),
+                button("Create Case").on_press(Message::Submit),
+                self.cancel_btn()
             ]
+            .spacing(10)
         ]
-        .spacing(10)
-        .into()
+        .align_x(Center)
+        .max_width(500)
+        .spacing(10);
+
+        center(content).into()
     }
 
+    // todo - rethink this widgeth entirly.. should probably just display
+    // the folder browser and attempt to open the case instead of being on a seperate
+    // view
     fn open_case_widget(&self) -> Element<'_, Message> {
-        row![
-            text("Open Case"),
-            column![
+        let content = column![
+            text("Open Existing Case"),
+            container(
                 row![
-                    text("Case Path"),
+                    container(text("Case Path")).padding([0, 10]),
                     text_input("", &self.open_case_settings.case_path)
+                        .width(300)
                         .on_input(Message::OpenCasePathChanged)
                 ]
-                .spacing(10),
-                row![
-                    button("Submit").on_press(Message::Submit),
-                    button("Browse").on_press(Message::BrowseClicked),
-                    self.cancel_btn()
-                ]
-                .spacing(10)
+                .align_y(Center)
+            )
+            .style(container::rounded_box),
+            row![
+                button("Submit").on_press(Message::Submit),
+                button("Browse").on_press(Message::BrowseClicked),
+                self.cancel_btn()
             ]
+            .spacing(10)
         ]
-        .spacing(10)
-        .into()
+        .align_x(Center)
+        .max_width(500)
+        .spacing(10);
+
+        center(content).into()
     }
 
     fn cancel_btn(&self) -> Element<'_, Message> {
