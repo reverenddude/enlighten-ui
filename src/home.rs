@@ -140,17 +140,6 @@ impl HomePage {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        self.home_widget()
-        /*
-        match self.page_state {
-            HomePageState::Home => self.home_widget(),
-            HomePageState::CreateCase => self.new_case_widget(),
-            HomePageState::OpenCase => self.open_case_widget(),
-        }
-        */
-    }
-
-    fn home_widget(&self) -> Element<'_, Message> {
         let left_panel = column![
             container(text("Enlighten Processing").height(Length::FillPortion(5))),
             container(self.case_btns())
