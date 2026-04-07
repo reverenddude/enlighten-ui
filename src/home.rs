@@ -1,7 +1,9 @@
+use std::path::PathBuf;
+
 use iced::alignment::Horizontal::Right;
 use iced::alignment::Vertical::Bottom;
 use iced::widget::{button, column, container, row, space, text, text_input};
-use iced::{Center, Element, Length};
+use iced::{Center, Element, Length, Task};
 
 #[derive(Default, Debug, Clone)]
 pub struct HomePage {
@@ -31,6 +33,10 @@ pub enum Message {
     NewCaseNameChanged(String),
     NewCasePathChanged(String),
     OpenCasePathChanged(String),
+
+    // Open Case Browser
+    BrowseClicked,
+    FolderSelected(Option<PathBuf>),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -46,6 +52,12 @@ pub enum CaseSettings {
     OpenCase(String),
 }
 
+pub enum HomePageUpdateResult {
+    Task(Task<Message>),
+    Navigate(CaseSettings),
+    None,
+}
+
 impl HomePage {
     pub fn new() -> Self {
         Self {
@@ -55,41 +67,75 @@ impl HomePage {
         }
     }
 
-    pub fn update(&mut self, message: Message) -> Option<CaseSettings> {
+    pub fn update(&mut self, message: Message) -> HomePageUpdateResult {
         match message {
             Message::CreateNewCase => {
                 self.page_state = HomePageState::CreateCase;
-                None
+                HomePageUpdateResult::None
             }
             Message::OpenCase => {
                 self.page_state = HomePageState::OpenCase;
-                None
+                HomePageUpdateResult::None
             }
             Message::Submit => match self.page_state {
-                HomePageState::CreateCase => {
-                    Some(CaseSettings::NewCase(self.new_case_settings.clone()))
-                }
-                HomePageState::OpenCase => Some(CaseSettings::OpenCase(
+                HomePageState::CreateCase => HomePageUpdateResult::Navigate(CaseSettings::NewCase(
+                    self.new_case_settings.clone(),
+                )),
+                HomePageState::OpenCase => HomePageUpdateResult::Navigate(CaseSettings::OpenCase(
                     self.open_case_settings.case_path.clone(),
                 )),
-                HomePageState::Home => None,
+                HomePageState::Home => HomePageUpdateResult::None,
             },
             Message::NewCaseNameChanged(name) => {
                 self.new_case_settings.case_name = name;
-                None
+                HomePageUpdateResult::None
             }
             Message::NewCasePathChanged(path) => {
                 self.new_case_settings.case_path = path;
-                None
+                HomePageUpdateResult::None
             }
             Message::OpenCasePathChanged(path) => {
                 self.open_case_settings.case_path = path;
-                None
+                HomePageUpdateResult::None
             }
             Message::Cancel => {
                 self.page_state = HomePageState::Home;
-                None
+                HomePageUpdateResult::None
             }
+            Message::BrowseClicked => {
+                let task = Task::perform(
+                    async {
+                        rfd::AsyncFileDialog::new()
+                            .set_title("Select Case Folder")
+                            .pick_folder()
+                            .await
+                            .map(|handle| handle.path().to_path_buf())
+                    },
+                    Message::FolderSelected,
+                );
+                HomePageUpdateResult::Task(task)
+            }
+            Message::FolderSelected(path) => match self.page_state {
+                HomePageState::OpenCase => {
+                    if let Some(path) = path {
+                        self.open_case_settings.case_path = path.to_string_lossy().to_string();
+                        return HomePageUpdateResult::Navigate(CaseSettings::OpenCase(
+                            self.open_case_settings.case_path.clone(),
+                        ));
+                    } else {
+                        return HomePageUpdateResult::None;
+                    }
+                }
+                HomePageState::CreateCase => {
+                    if let Some(path) = path {
+                        self.new_case_settings.case_path = path.to_string_lossy().to_string();
+                    };
+                    return HomePageUpdateResult::None;
+                }
+                HomePageState::Home => {
+                    return HomePageUpdateResult::None;
+                }
+            },
         }
     }
 
@@ -156,10 +202,14 @@ impl HomePage {
                     text_input("", &self.new_case_settings.case_path)
                         .on_input(Message::NewCasePathChanged)
                 ],
-                button("Create Case").on_press(Message::Submit),
-                self.cancel_btn()
+                row![
+                    button("Browse").on_press(Message::BrowseClicked),
+                    button("Create Case").on_press(Message::Submit),
+                    self.cancel_btn()
+                ]
             ]
         ]
+        .spacing(10)
         .into()
     }
 
@@ -171,11 +221,17 @@ impl HomePage {
                     text("Case Path"),
                     text_input("", &self.open_case_settings.case_path)
                         .on_input(Message::OpenCasePathChanged)
-                ],
-                button("Open Case").on_press(Message::Submit),
-                self.cancel_btn()
+                ]
+                .spacing(10),
+                row![
+                    button("Submit").on_press(Message::Submit),
+                    button("Browse").on_press(Message::BrowseClicked),
+                    self.cancel_btn()
+                ]
+                .spacing(10)
             ]
         ]
+        .spacing(10)
         .into()
     }
 
