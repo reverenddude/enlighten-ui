@@ -93,6 +93,10 @@ impl CasePage {
                 if let CasePageState::EditingProfile(profile) = &mut self.processing_state {
                     match profile.update(profile_msg) {
                         processing_profile_form::ProfileMessage::None => return None,
+                        processing_profile_form::ProfileMessage::Cancel => {
+                            self.processing_state = CasePageState::AddNewEvidence;
+                            return None;
+                        }
                         processing_profile_form::ProfileMessage::ProcessingProfileSaved(
                             processing_profile,
                         ) => {

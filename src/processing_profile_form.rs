@@ -1,3 +1,4 @@
+use iced::Alignment::Center;
 use iced::Element;
 use iced::widget::{
     button, center, checkbox, column, container, pick_list, row, text, text_editor, text_input,
@@ -32,6 +33,7 @@ pub enum Message {
 #[derive(Debug, Clone)]
 pub enum ProfileMessage {
     None,
+    Cancel,
     ProcessingProfileSaved(enlighten::ProcessingProfile),
 }
 
@@ -88,7 +90,7 @@ impl ProcessingProfileForm {
 
     pub fn update(&mut self, message: Message) -> ProfileMessage {
         match message {
-            Message::Cancel => ProfileMessage::None,
+            Message::Cancel => ProfileMessage::Cancel,
             Message::Create => {
                 let profile = self.to_profile();
                 ProfileMessage::ProcessingProfileSaved(profile)
@@ -144,6 +146,8 @@ impl ProcessingProfileForm {
             ]
             .spacing(10)
         ]
+        .spacing(10)
+        .align_x(Center)
         .max_width(400);
         center(content).into()
     }
