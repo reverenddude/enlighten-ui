@@ -19,8 +19,8 @@ pub enum Message {
     Process,
 
     NewProfile,
+    EditProfile,
     ProfileForm(processing_profile_form::Message),
-    SaveProfile,
 }
 
 #[derive(Debug, Clone)]
@@ -96,7 +96,7 @@ impl CasePage {
                         processing_profile_form::ProfileMessage::ProcessingProfileSaved(
                             processing_profile,
                         ) => {
-                            self.case.processing_profile = processing_profile;
+                            self.case.add_processing_profile(processing_profile);
                             self.processing_state = CasePageState::AddNewEvidence;
                             return None;
                         }
@@ -104,13 +104,18 @@ impl CasePage {
                 }
                 None
             }
-            Message::SaveProfile => todo!(),
+            Message::EditProfile => {
+                self.processing_state = CasePageState::EditingProfile(
+                    ProcessingProfileForm::from_profile(&self.case.processing_profile),
+                );
+                None
+            }
         }
     }
 
     fn add_new_evidence_widget(&self) -> Element<'_, Message> {
         let content = column![
-            self.new_processing_profile_widget(),
+            self.processing_profile_widget(),
             row![
                 button("Cancel").on_press(Message::CancelProcessing),
                 button("Submit").on_press(Message::Process)
@@ -121,12 +126,18 @@ impl CasePage {
         center(content).into()
     }
 
-    fn processing_profile_selector_widget(&self) -> Element<'_, Message> {
-        todo!()
-    }
-
-    fn new_processing_profile_widget(&self) -> Element<'_, Message> {
-        column![container(row![]).style(container::rounded_box)].into()
+    fn processing_profile_widget(&self) -> Element<'_, Message> {
+        column![
+            container(row![
+                text(format!(
+                    "Selected Profile: {}",
+                    self.case.processing_profile.name.as_str()
+                )),
+                button("Edit").on_press(Message::EditProfile)
+            ])
+            .style(container::rounded_box)
+        ]
+        .into()
     }
 
     fn processing_widget(&self) -> Element<'_, Message> {
