@@ -3,16 +3,17 @@ use iced::{Element, Length, Task, window};
 
 mod case;
 mod home;
+mod processing_profile_form;
 
 use case::CasePage;
 use home::HomePage;
 
 fn main() -> iced::Result {
     iced::application(App::default, App::update, App::view)
-        .window(window::Settings {
-            position: window::Position::Centered,
-            ..Default::default()
-        })
+        // .window(window::Settings {
+        //     position: window::Position::Centered,
+        //     ..Default::default()
+        // })
         .theme(|app: &App| app.theme.clone())
         .title(App::title)
         .run()
