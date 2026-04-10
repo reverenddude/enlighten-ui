@@ -2,6 +2,7 @@ use iced::widget::{column, container, pick_list, row, text};
 use iced::{Element, Length, Task, window};
 
 mod case;
+mod evidence_store_form;
 mod home;
 mod processing_profile_form;
 

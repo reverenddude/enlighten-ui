@@ -1,9 +1,8 @@
 use iced::Alignment::Center;
 use iced::Element;
-use iced::widget::{button, center, column, container, pick_list, row, text, text_input};
+use iced::widget::{button, center, column, container, row, text};
 
-use enlighten::{EvidenceStore, ProcessingProfile};
-
+use crate::evidence_store_form::{self, EvidenceStoreForm};
 use crate::processing_profile_form::{self, ProcessingProfileForm};
 
 #[derive(Debug)]
@@ -21,17 +20,9 @@ pub enum Message {
     NewProfile,
     EditProfile,
     ProfileForm(processing_profile_form::Message),
-}
 
-#[derive(Debug, Clone)]
-pub struct NewEvidenceStoreSettings {
-    store_name: String,
-    store_path: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct NewProcessingProfileState {
-    name: String,
+    NewEvidenceStore,
+    EvidenceStoreForm(evidence_store_form::Message),
 }
 
 pub enum NavigationMessage {
@@ -43,6 +34,7 @@ enum CasePageState {
     AddNewEvidence,
     Processing,
     DisplayResults,
+    CreateEvidenceStore(EvidenceStoreForm),
     EditingProfile(ProcessingProfileForm),
 }
 
@@ -71,6 +63,9 @@ impl CasePage {
             CasePageState::EditingProfile(ref processing_profile_form) => {
                 processing_profile_form.view().map(Message::ProfileForm)
             }
+            CasePageState::CreateEvidenceStore(ref evidence_store_form) => {
+                evidence_store_form.view().map(Message::EvidenceStoreForm)
+            }
         }
     }
 
@@ -78,6 +73,8 @@ impl CasePage {
         match message {
             Message::Process => {
                 self.processing_state = CasePageState::Processing;
+                let _ = self.case.process();
+                self.processing_state = CasePageState::DisplayResults;
                 None
             }
             Message::CancelProcessing => {
@@ -92,17 +89,15 @@ impl CasePage {
             Message::ProfileForm(profile_msg) => {
                 if let CasePageState::EditingProfile(profile) = &mut self.processing_state {
                     match profile.update(profile_msg) {
-                        processing_profile_form::ProfileMessage::None => return None,
+                        processing_profile_form::ProfileMessage::None => (),
                         processing_profile_form::ProfileMessage::Cancel => {
                             self.processing_state = CasePageState::AddNewEvidence;
-                            return None;
                         }
                         processing_profile_form::ProfileMessage::ProcessingProfileSaved(
                             processing_profile,
                         ) => {
                             self.case.add_processing_profile(processing_profile);
                             self.processing_state = CasePageState::AddNewEvidence;
-                            return None;
                         }
                     }
                 }
@@ -114,12 +109,35 @@ impl CasePage {
                 );
                 None
             }
+            Message::NewEvidenceStore => {
+                self.processing_state =
+                    CasePageState::CreateEvidenceStore(EvidenceStoreForm::new());
+                None
+            }
+            Message::EvidenceStoreForm(evidence_msg) => {
+                if let CasePageState::CreateEvidenceStore(store) = &mut self.processing_state {
+                    match store.update(evidence_msg) {
+                        evidence_store_form::EvidenceStoreMessage::None => (),
+                        evidence_store_form::EvidenceStoreMessage::Cancel => {
+                            self.processing_state = CasePageState::AddNewEvidence;
+                        }
+                        evidence_store_form::EvidenceStoreMessage::Create(evidence_store) => {
+                            self.processing_state = CasePageState::AddNewEvidence;
+                            let _ = self
+                                .case
+                                .add_evidence_store(evidence_store.name, evidence_store.store_path);
+                        }
+                    }
+                }
+                None
+            }
         }
     }
 
     fn add_new_evidence_widget(&self) -> Element<'_, Message> {
         let content = column![
             self.processing_profile_widget(),
+            self.create_evidence_store_widget(),
             row![
                 button("Cancel").on_press(Message::CancelProcessing),
                 button("Submit").on_press(Message::Process)
@@ -128,6 +146,13 @@ impl CasePage {
         ];
 
         center(content).into()
+    }
+
+    fn create_evidence_store_widget(&self) -> Element<'_, Message> {
+        row![container(row![
+            button("Add Evidence Store").on_press(Message::NewEvidenceStore)
+        ])]
+        .into()
     }
 
     fn processing_profile_widget(&self) -> Element<'_, Message> {

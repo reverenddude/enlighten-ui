@@ -15,9 +15,6 @@ pub struct ProcessingProfileForm {
 }
 
 #[derive(Debug, Clone)]
-pub struct PasswordBankForm {}
-
-#[derive(Debug, Clone)]
 pub struct MimeSettingsForm {}
 
 #[derive(Debug, Clone)]
