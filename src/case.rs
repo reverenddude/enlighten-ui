@@ -1,14 +1,22 @@
 use iced::Alignment::Center;
 use iced::Element;
-use iced::widget::{button, center, column, container, row, text};
+use iced::Length;
+use iced::widget::scrollable::{Direction, Scrollbar};
+use iced::widget::{button, center, column, container, row, scrollable, table, text};
 
 use crate::evidence_store_form::{self, EvidenceStoreForm};
 use crate::processing_profile_form::{self, ProcessingProfileForm};
+use enlighten::{
+    Case, EnlightenField, FieldId, FieldValue, MetadataProfile, QueryBuilder, QueryResult,
+};
 
 #[derive(Debug)]
 pub struct CasePage {
-    case: enlighten::Case,
+    case: Case,
     processing_state: CasePageState,
+    current_metadata_profile: String,
+    current_results: Vec<QueryResult>,
+    current_search: QueryBuilder,
 }
 
 #[derive(Debug, Clone)]
@@ -45,9 +53,33 @@ impl CasePage {
             false => CasePageState::AddNewEvidence,
         };
 
+        let profile = case
+            .get_all_metadata_profiles()
+            .first()
+            .unwrap_or(&&MetadataProfile::default())
+            .name
+            .clone();
+
+        let search = QueryBuilder::new()
+            //.select(case.get_metadata_profile(&profile).unwrap().fields.clone())
+            .select(vec![
+                EnlightenField::Guid.into(),
+                EnlightenField::TopLevelGuid.into(),
+                EnlightenField::MD5Hash.into(),
+                EnlightenField::FileSize.into(),
+                EnlightenField::IsTopLevel.into(),
+                EnlightenField::Kind.into(),
+                EnlightenField::MimeType.into(),
+            ])
+            .limit(50);
+        let results = case.search(&search).unwrap();
+
         Self {
             case,
             processing_state,
+            current_metadata_profile: profile,
+            current_results: results,
+            current_search: search,
         }
     }
 
@@ -58,7 +90,7 @@ impl CasePage {
     pub fn view(&self) -> Element<'_, Message> {
         match self.processing_state {
             CasePageState::Processing => self.processing_widget(),
-            CasePageState::DisplayResults => self.results_widget(),
+            CasePageState::DisplayResults => self.temp_results_thing(),
             CasePageState::AddNewEvidence => self.add_new_evidence_widget(),
             CasePageState::EditingProfile(ref processing_profile_form) => {
                 processing_profile_form.view().map(Message::ProfileForm)
@@ -74,6 +106,7 @@ impl CasePage {
             Message::Process => {
                 self.processing_state = CasePageState::Processing;
                 let _ = self.case.process();
+                self.current_results = self.case.search(&self.current_search).unwrap();
                 self.processing_state = CasePageState::DisplayResults;
                 None
             }
@@ -134,6 +167,31 @@ impl CasePage {
         }
     }
 
+    fn results_widget(&self) -> Element<'_, Message> {
+        if self.current_results.len() == 0 {
+            return text("No Results").into();
+        }
+
+        let columns = self
+            .current_results
+            .first()
+            .unwrap()
+            .fields
+            .keys()
+            .map(|field_id| {
+                let field_id = field_id.clone();
+                table::column(
+                    text(field_id.to_string()), // header element
+                    move |row: &QueryResult| {
+                        // cell view fn
+                        text(row.get(&field_id).to_string())
+                    },
+                )
+            });
+
+        table(columns, &self.current_results).into()
+    }
+
     fn add_new_evidence_widget(&self) -> Element<'_, Message> {
         let content = column![
             self.processing_profile_widget(),
@@ -177,14 +235,17 @@ impl CasePage {
             .into()
     }
 
-    fn results_widget(&self) -> Element<'_, Message> {
-        let content = column![
+    fn temp_results_thing(&self) -> Element<'_, Message> {
+        column![
             button("Create Processing Profile").on_press(Message::NewProfile),
             button("Start processing").on_press(Message::Process),
             button("Close Case").on_press(Message::CloseCase),
+            scrollable(self.results_widget()).direction(Direction::Both {
+                horizontal: Scrollbar::default(),
+                vertical: Scrollbar::default()
+            }),
         ]
-        .align_x(Center);
-
-        center(content).into()
+        .width(Length::Fill)
+        .into()
     }
 }

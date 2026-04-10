@@ -144,8 +144,8 @@ impl ProcessingProfileForm {
             .spacing(10)
         ]
         .spacing(10)
-        .align_x(Center)
         .max_width(400);
+
         center(content).into()
     }
 }

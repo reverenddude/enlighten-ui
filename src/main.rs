@@ -105,7 +105,9 @@ impl App {
         };
 
         //center(content).into()
-        column![container(content).height(Length::Fill), self.theme_picker()].into()
+        column![container(content).height(Length::Fill), self.theme_picker()]
+            .width(Length::Fill)
+            .into()
     }
 
     fn theme_picker(&self) -> Element<'_, Message> {
