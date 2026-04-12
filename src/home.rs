@@ -1,9 +1,7 @@
-use std::path::PathBuf;
-
-use iced::alignment::Horizontal::Right;
 use iced::alignment::Vertical::Bottom;
 use iced::widget::{button, center, column, container, row, space, text, text_input};
 use iced::{Center, Element, Length, Task};
+use std::path::PathBuf;
 
 #[derive(Default, Debug, Clone)]
 pub struct HomePage {

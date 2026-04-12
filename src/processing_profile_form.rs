@@ -1,4 +1,3 @@
-use iced::Alignment::Center;
 use iced::Element;
 use iced::widget::{
     button, center, checkbox, column, container, pick_list, row, text, text_editor, text_input,

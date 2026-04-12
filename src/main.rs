@@ -1,5 +1,5 @@
 use iced::widget::{column, container, pick_list, row, text};
-use iced::{Element, Length, Task, window};
+use iced::{Element, Length, Task};
 
 mod case;
 mod evidence_store_form;
